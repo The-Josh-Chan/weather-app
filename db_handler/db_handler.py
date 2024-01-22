@@ -10,8 +10,8 @@ def search_city(city):
     cursor = connection.cursor()
     try:
         cursor.execute(f"select * from {city}")
-        search = cursor.fetchall()
-        print(search)
+        tuple_list = cursor.fetchall()
+        
         connection.close()
     except sqlite3.Error as err: 
         print(err, ": Use load_data to pull weather data into database and try again")
@@ -25,5 +25,7 @@ def create_location_db(user_location, weather_df):
     weather_tuple_list = []
     for date, values in weather_df.iterrows():
         weather_tuple_list += [(date, values["T2M_MIN"], values["T2M_MAX"], values["T2M"])]
+    print(weather_tuple_list)
     cursor.executemany(f"insert into {user_location} values (?,?,?,?)", weather_tuple_list)
+    connection.commit()
     connection.close()

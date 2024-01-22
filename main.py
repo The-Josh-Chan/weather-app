@@ -8,12 +8,13 @@ class WeatherStation(cmd.Cmd):
     def do_load_data(self, line):
         user_location = input(" location: ")
         weather_data = weather_api.fetch_weather_data(user_location)
+        print("Weather Data:", weather_data)
         weather_df = data_processor.process_data(weather_data)
+        print("weather_df:", weather_df)
         # weather_df is a pandas dataframe with timestamps as keys and parameters as columns
         # Upload data to database
         db_handler.create_location_db(user_location, weather_df)
-
-        return weather_data
+        return False
 
     def do_search_city(self, line):
         user_location = input(" City: ")
@@ -21,8 +22,6 @@ class WeatherStation(cmd.Cmd):
         return weather_data
     # Processed data is returned as a pandas DataFrame
     # process_data = data_processor.process_data(weather_data)
-
-
 
     # print(weather_data)
     # avg_temp = weather_data['T2M']
