@@ -11,21 +11,34 @@ def search_city(city):
     try:
         cursor.execute(f"select * from {city}")
         tuple_list = cursor.fetchall()
-        
         connection.close()
+        return tuple_list
     except sqlite3.Error as err: 
-        print(err, ": Use load_data to pull weather data into database and try again")
+        print(err, ": Use create_city_table to pull weather data into database and try again")
         connection.close()
+        # Search city expects a return, if not able to search for city, return False
+        tuple_list = False
+        return tuple_list
 
 def create_location_db(user_location, weather_df):
     connection = sqlite3.connect("weather_data.db")
     cursor = connection.cursor()
     # Create Table
-    cursor.execute(f"create table {user_location} (date integer, temperature_min integer, temperature_max integer, temperature_2m integer)")
+    cursor.execute(f"create table {user_location} (date integer, temperature_2m integer)")
     weather_tuple_list = []
     for date, values in weather_df.iterrows():
-        weather_tuple_list += [(date, values["T2M_MIN"], values["T2M_MAX"], values["T2M"])]
-    print(weather_tuple_list)
-    cursor.executemany(f"insert into {user_location} values (?,?,?,?)", weather_tuple_list)
+        weather_tuple_list += [(date, values["T2M"])]
+    cursor.executemany(f"insert into {user_location} values (?,?)", weather_tuple_list)
     connection.commit()
+    connection.close()
+
+def update_city(user_location, weather_df):
+    connection = sqlite3.connect("weather_data.db")
+    cursor = connection.cursor()
+    weather_tuple_list = []
+    for date, values in weather_df.iterrows():
+        weather_tuple_list += [(date, values["T2M"])]
+    cursor.executemany(f"insert into {user_location} values (?,?)", weather_tuple_list)
+    connection.commit()
+    print(f"{user_location} weathter data has been updated, use search_city function to view updated weather data table")
     connection.close()

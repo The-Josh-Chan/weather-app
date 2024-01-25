@@ -5,12 +5,11 @@ from db_handler import db_handler
 import cmd
 
 class WeatherStation(cmd.Cmd):
-    def do_load_data(self, line):
+    def do_create_city_table(self, line):
         user_location = input(" location: ")
         weather_data = weather_api.fetch_weather_data(user_location)
         print("Weather Data:", weather_data)
         weather_df = data_processor.process_data(weather_data)
-        print("weather_df:", weather_df)
         # weather_df is a pandas dataframe with timestamps as keys and parameters as columns
         # Upload data to database
         db_handler.create_location_db(user_location, weather_df)
@@ -18,18 +17,22 @@ class WeatherStation(cmd.Cmd):
 
     def do_search_city(self, line):
         user_location = input(" City: ")
-        weather_data = db_handler.search_city(user_location)
-        return weather_data
-    # Processed data is returned as a pandas DataFrame
-    # process_data = data_processor.process_data(weather_data)
+        weather_data_tuple = db_handler.search_city(user_location)
+        # Take Weather data from sqlite3 database and process to look readable
+        if weather_data_tuple == False:
+            return False
+        else:
+            weather_df = data_processor.process_data(weather_data_tuple)
+            print(weather_df)
+            return False
 
-    # print(weather_data)
-    # avg_temp = weather_data['T2M']
-    # temp_max = weather_data['T2M_MAX']
-    # temp_min = weather_data['T2M_MIN']
-    # cloud_coverage = weather_data['CLOUD_AMT_DAY']
-    # snow_amount = weather_data['PRECSNO']
-    # precipitation = weather_data['TQV']
+    def do_load_old_weather(self, line):
+        user_location = input(" City: ")
+        start_year = input(" Start Year: ")
+        end_year = input(" End Year: ")
+        weather_data = weather_api.fetch_weather_data_date_range(user_location, start_year, end_year)
+        weather_df = data_processor.process_data(weather_data)
+        db_handler.update_city(user_location, weather_df)
 
 if __name__ == "__main__":
     WeatherStation().cmdloop()
