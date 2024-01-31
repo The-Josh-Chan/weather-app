@@ -8,7 +8,6 @@ class WeatherStation(cmd.Cmd):
     def do_create_city_table(self, line):
         user_location = input(" location: ")
         weather_data = weather_api.fetch_weather_data(user_location)
-        print("Weather Data:", weather_data)
         weather_df = data_processor.process_data(weather_data)
         # weather_df is a pandas dataframe with timestamps as keys and parameters as columns
         # Upload data to database
@@ -23,14 +22,15 @@ class WeatherStation(cmd.Cmd):
             return False
         else:
             weather_df = data_processor.process_data(weather_data_tuple)
+            weather_df.rename(columns={'0':"Date", '1':"Average Temperature [C]"})
             print(weather_df)
             return False
 
     def do_load_old_weather(self, line):
         user_location = input(" City: ")
-        start_year = input(" Start Year: ")
-        end_year = input(" End Year: ")
-        weather_data = weather_api.fetch_weather_data_date_range(user_location, start_year, end_year)
+        start_date = input(" Start Date (YYYYMMDD): ")
+        end_date = input(" End Date (YYYYMMDD): ")
+        weather_data = weather_api.fetch_weather_data_date_range(user_location, start_date, end_date)
         weather_df = data_processor.process_data(weather_data)
         db_handler.update_city(user_location, weather_df)
 

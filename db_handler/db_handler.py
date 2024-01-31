@@ -1,9 +1,23 @@
 import sqlite3
 
+def insert_into_table(weather_df, cursor, connection, user_location):
+    weather_tuple_list = []
+    for date, values in weather_df.iterrows():
+        weather_tuple_list += [(date, values["T2M"])]
+    cursor.executemany(f"insert into {user_location} values (?,?)", weather_tuple_list)
+    connection.commit()
+    print(f"{user_location} weathter data has been updated, use search_city function to view updated weather data table")
+
 def check_city(city, db_name):
     connection = sqlite3.connect(db_name)
     cursor = connection.cursor()
-    connection.close()
+    try:
+        cursor.execute(f"select * from {city}")
+        connection.close()
+        return True
+    except: 
+        connection.close()
+        return False
 
 def search_city(city):
     connection = sqlite3.connect("weather_data.db")
@@ -24,21 +38,22 @@ def create_location_db(user_location, weather_df):
     connection = sqlite3.connect("weather_data.db")
     cursor = connection.cursor()
     # Create Table
+    if weather_df.empty:
+        print("API call returned empty data. Try again.")
+        cursor.close()
+        return False
     cursor.execute(f"create table {user_location} (date integer, temperature_2m integer)")
-    weather_tuple_list = []
-    for date, values in weather_df.iterrows():
-        weather_tuple_list += [(date, values["T2M"])]
-    cursor.executemany(f"insert into {user_location} values (?,?)", weather_tuple_list)
-    connection.commit()
+    insert_into_table(weather_df, cursor, connection, user_location)
     connection.close()
 
 def update_city(user_location, weather_df):
     connection = sqlite3.connect("weather_data.db")
     cursor = connection.cursor()
-    weather_tuple_list = []
-    for date, values in weather_df.iterrows():
-        weather_tuple_list += [(date, values["T2M"])]
-    cursor.executemany(f"insert into {user_location} values (?,?)", weather_tuple_list)
-    connection.commit()
-    print(f"{user_location} weathter data has been updated, use search_city function to view updated weather data table")
-    connection.close()
+    if check_city(user_location, "weather_data.db") == True:
+        insert_into_table(weather_df, cursor, connection, user_location)
+        connection.close()
+    else:
+        cursor.execute(f"create table {user_location} (date integer, temperature_2m integer)")
+        insert_into_table(weather_df, cursor, connection, user_location)
+        print(f"{user_location} table has been created and updated, use search_city function to view updated weather data table")
+        connection.close()
